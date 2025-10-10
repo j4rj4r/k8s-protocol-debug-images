@@ -1,7 +1,8 @@
 version: 2
 updates:
   - package-ecosystem: docker
-    directory: /
+    directories:
+      - grpc/
     schedule:
       interval: daily
 
