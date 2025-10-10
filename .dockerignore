@@ -1,0 +1,42 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# GitHub
+.github
+
+# CI/CD
+.travis.yml
+.gitlab-ci.yml
+
+# Documentation
+*.md
+!grpc/README-grpc.md
+LICENSE
+
+# IDE and Editor
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Development
+.env
+.env.*
+*.log
+
+# Build artifacts
+*.tar.gz
+*.zip
+
+# Test files
+test/
+tests/
+*_test.go
+*_test.py
+
+# Claude
+.claude

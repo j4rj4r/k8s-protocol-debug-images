@@ -1,0 +1,36 @@
+# gRPC Debugging Image for Kubernetes
+# Based on Alpine Linux for minimal footprint
+
+FROM alpine:3.22.2
+
+# Install build dependencies and gRPC tools
+RUN apk add --no-cache \
+    ca-certificates \
+    curl \
+    wget \
+    jq \
+    bind-tools \
+    netcat-openbsd \
+    openssl \
+    && rm -rf /var/cache/apk/*
+
+# Copy and run binary fetch script
+COPY build/fetch_binaries.sh /tmp/fetch_binaries.sh
+RUN chmod +x /tmp/fetch_binaries.sh && \
+    /tmp/fetch_binaries.sh && \
+    rm /tmp/fetch_binaries.sh
+
+# Add a non-root user for security best practices
+RUN addgroup -g 1000 debugger && \
+    adduser -D -u 1000 -G debugger debugger && \
+    mkdir -p /home/debugger/protos && \
+    chown -R debugger:debugger /home/debugger
+
+# Set working directory
+WORKDIR /home/debugger
+
+# Run as non-root user
+USER debugger
+
+# Default command - interactive shell
+CMD ["/bin/sh"]

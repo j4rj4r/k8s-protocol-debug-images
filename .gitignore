@@ -1,0 +1,38 @@
+# Binaries and build artifacts
+*.tar.gz
+*.zip
+*.deb
+*.rpm
+
+# IDE and Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment files
+.env
+.env.*
+*.log
+
+# Claude
+.claude/
+
+# Docker
+docker-compose.override.yml
+
+# OS specific
+Thumbs.db
+.Spotlight-V100
+.Trashes
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Kubernetes local testing
+kubeconfig
+*.kubeconfig
