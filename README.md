@@ -34,6 +34,41 @@ kubectl exec -it grpc-debug -- grpcurl -plaintext my-service:50051 list
 
 **Documentation**: See [grpc/README-grpc.md](grpc/README-grpc.md) for detailed usage examples.
 
+---
+
+### LDAP Debug Image
+
+**Location**: `ldap/`
+
+A lightweight debugging image for LDAP directory services in Kubernetes environments.
+
+**Tools Included**:
+- **ldapsearch** - Search and query LDAP directories
+- **ldapadd** - Add entries to LDAP directories
+- **ldapmodify** - Modify LDAP entries
+- **ldapdelete** - Delete LDAP entries
+- **ldapwhoami** - Display authenticated user DN
+- **ldappasswd** - Change LDAP passwords
+- **ldapvi** - Interactive LDAP editor
+- **Supporting utilities**: curl, wget, jq, openssl, dig, netcat
+
+**Usage**:
+```bash
+# Build the image
+docker build -f ldap/Dockerfile.ldap -t ldap-debug:latest ldap/
+
+# Quick debug with ephemeral container
+kubectl debug mypod -it --image=j4rj4r/ldap-debug
+
+# Spin up a throwaway pod
+kubectl run tmp-shell --rm -i --tty --image j4rj4r/ldap-debug
+
+# Test LDAP service
+kubectl exec -it ldap-debug -- ldapsearch -x -H ldap://openldap:389 -b "dc=example,dc=com"
+```
+
+**Documentation**: See [ldap/README-ldap.md](ldap/README-ldap.md) for detailed usage examples.
+
 ## Building Images
 
 Each protocol has its own directory with:

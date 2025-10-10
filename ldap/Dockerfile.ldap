@@ -1,0 +1,32 @@
+# LDAP Debugging Image for Kubernetes
+# Based on Alpine Linux for minimal footprint
+
+FROM alpine:3.22.2
+
+# Install LDAP tools and dependencies
+RUN apk add --no-cache \
+    ca-certificates \
+    curl \
+    wget \
+    jq \
+    bind-tools \
+    netcat-openbsd \
+    openssl \
+    openldap-clients \
+    ldapvi \
+    && rm -rf /var/cache/apk/*
+
+# Add a non-root user for security best practices
+RUN addgroup -g 1000 debugger && \
+    adduser -D -u 1000 -G debugger debugger && \
+    mkdir -p /home/debugger/.ldaprc && \
+    chown -R debugger:debugger /home/debugger
+
+# Set working directory
+WORKDIR /home/debugger
+
+# Run as non-root user
+USER debugger
+
+# Default command - interactive shell
+CMD ["/bin/sh"]

@@ -3,6 +3,7 @@ updates:
   - package-ecosystem: docker
     directories:
       - grpc/
+      - ldap/
     schedule:
       interval: daily
 

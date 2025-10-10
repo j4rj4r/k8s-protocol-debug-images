@@ -1,0 +1,331 @@
+---
+# Simple LDAP Debug Pod
+# Use this for basic LDAP testing within the cluster
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ldap-debug
+  namespace: default
+  labels:
+    app: ldap-debug
+spec:
+  containers:
+  - name: ldap-debug
+    image: ldap-debug:latest
+    imagePullPolicy: IfNotPresent
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do sleep 3600; done"]
+    resources:
+      requests:
+        memory: "16Mi"
+        cpu: "10m"
+      limits:
+        memory: "64Mi"
+        cpu: "200m"
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+        - ALL
+    volumeMounts:
+    - name: tmp
+      mountPath: /tmp
+  volumes:
+  - name: tmp
+    emptyDir: {}
+  restartPolicy: Never
+
+---
+# LDAP Debug Pod with TLS Certificates
+# Use this for testing LDAPS connections
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ldap-debug-tls
+  namespace: default
+  labels:
+    app: ldap-debug
+    feature: tls
+spec:
+  containers:
+  - name: ldap-debug
+    image: ldap-debug:latest
+    imagePullPolicy: IfNotPresent
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do sleep 3600; done"]
+    env:
+    - name: LDAPTLS_CACERT
+      value: /certs/ca.crt
+    resources:
+      requests:
+        memory: "16Mi"
+        cpu: "10m"
+      limits:
+        memory: "64Mi"
+        cpu: "200m"
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+        - ALL
+    volumeMounts:
+    - name: certs
+      mountPath: /certs
+      readOnly: true
+    - name: tmp
+      mountPath: /tmp
+  volumes:
+  - name: certs
+    secret:
+      secretName: ldap-ca-cert  # Create this secret with your CA certificate
+      optional: true
+  - name: tmp
+    emptyDir: {}
+  restartPolicy: Never
+
+---
+# LDAP Debug Pod with Credentials from Secret
+# Use this for authenticated LDAP operations
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ldap-credentials
+  namespace: default
+type: Opaque
+stringData:
+  binddn: "cn=admin,dc=example,dc=com"
+  password: "changeme"
+  basedn: "dc=example,dc=com"
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ldap-debug-auth
+  namespace: default
+  labels:
+    app: ldap-debug
+    feature: authentication
+spec:
+  containers:
+  - name: ldap-debug
+    image: ldap-debug:latest
+    imagePullPolicy: IfNotPresent
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do sleep 3600; done"]
+    env:
+    - name: LDAPBINDDN
+      valueFrom:
+        secretKeyRef:
+          name: ldap-credentials
+          key: binddn
+    - name: LDAPPASSWORD
+      valueFrom:
+        secretKeyRef:
+          name: ldap-credentials
+          key: password
+    - name: LDAPBASE
+      valueFrom:
+        secretKeyRef:
+          name: ldap-credentials
+          key: basedn
+    resources:
+      requests:
+        memory: "16Mi"
+        cpu: "10m"
+      limits:
+        memory: "64Mi"
+        cpu: "200m"
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+        - ALL
+    volumeMounts:
+    - name: tmp
+      mountPath: /tmp
+  volumes:
+  - name: tmp
+    emptyDir: {}
+  restartPolicy: Never
+
+---
+# LDAP Debug Pod for Cross-Namespace Testing
+# Deploy this in different namespaces to test network policies
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ldap-debug
+  namespace: test-namespace  # Change this to your target namespace
+  labels:
+    app: ldap-debug
+    role: network-tester
+spec:
+  containers:
+  - name: ldap-debug
+    image: ldap-debug:latest
+    imagePullPolicy: IfNotPresent
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do sleep 3600; done"]
+    env:
+    - name: POD_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    - name: POD_NAMESPACE
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.namespace
+    - name: POD_IP
+      valueFrom:
+        fieldRef:
+          fieldPath: status.podIP
+    resources:
+      requests:
+        memory: "16Mi"
+        cpu: "10m"
+      limits:
+        memory: "64Mi"
+        cpu: "200m"
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: true
+      capabilities:
+        drop:
+        - ALL
+    volumeMounts:
+    - name: tmp
+      mountPath: /tmp
+  volumes:
+  - name: tmp
+    emptyDir: {}
+  restartPolicy: Never
+
+---
+# LDAP Debug Pod with ConfigMap for .ldaprc
+# Use this for pre-configured LDAP settings
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ldap-config
+  namespace: default
+data:
+  ldaprc: |
+    URI ldap://openldap.default.svc.cluster.local:389
+    BASE dc=example,dc=com
+    BINDDN cn=admin,dc=example,dc=com
+    TLS_REQCERT allow
+
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: ldap-debug-config
+  namespace: default
+  labels:
+    app: ldap-debug
+    feature: config
+spec:
+  containers:
+  - name: ldap-debug
+    image: ldap-debug:latest
+    imagePullPolicy: IfNotPresent
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do sleep 3600; done"]
+    resources:
+      requests:
+        memory: "16Mi"
+        cpu: "10m"
+      limits:
+        memory: "64Mi"
+        cpu: "200m"
+    securityContext:
+      runAsNonRoot: true
+      runAsUser: 1000
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false  # Need to write .ldaprc
+      capabilities:
+        drop:
+        - ALL
+    volumeMounts:
+    - name: ldap-config
+      mountPath: /home/debugger/.ldaprc
+      subPath: ldaprc
+      readOnly: true
+    - name: tmp
+      mountPath: /tmp
+  volumes:
+  - name: ldap-config
+    configMap:
+      name: ldap-config
+  - name: tmp
+    emptyDir: {}
+  restartPolicy: Never
+
+---
+# DaemonSet for LDAP Debug on Every Node
+# Use this to test LDAP from every node in the cluster
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: ldap-debug-ds
+  namespace: default
+  labels:
+    app: ldap-debug
+spec:
+  selector:
+    matchLabels:
+      app: ldap-debug-ds
+  template:
+    metadata:
+      labels:
+        app: ldap-debug-ds
+    spec:
+      containers:
+      - name: ldap-debug
+        image: ldap-debug:latest
+        imagePullPolicy: IfNotPresent
+        command: ["/bin/sh"]
+        args: ["-c", "while true; do sleep 3600; done"]
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        resources:
+          requests:
+            memory: "16Mi"
+            cpu: "10m"
+          limits:
+            memory: "64Mi"
+            cpu: "50m"
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      tolerations:
+      - effect: NoSchedule
+        operator: Exists
+      - effect: NoExecute
+        operator: Exists
