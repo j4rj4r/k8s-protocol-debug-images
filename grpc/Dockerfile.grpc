@@ -1,7 +1,7 @@
 # gRPC Debugging Image for Kubernetes
 # Based on Alpine Linux for minimal footprint
 
-FROM alpine:3.22.2
+FROM alpine:3.23.0
 
 # Install build dependencies and gRPC tools
 RUN apk add --no-cache \
